@@ -62,7 +62,7 @@ class WorldModel
                 return if not x.r
                 return if not y.r
                 dis = Vector2d.distance(x.p, y.p)
-                return if dis > x.r+y.r
+                return if dis >= x.r+y.r
 
                 # hack
                 if x.r > y.r and x.side
@@ -73,6 +73,24 @@ class WorldModel
                 m2 = y.m
                 v1 = x.v
                 v2 = y.v
+                left = 0
+
+                if x.r + y.r - dis > 0.5
+                        c = 20
+                        for i in [0...c]
+                                dv1 = Vector2d.divide(v1, x.decay*c/i)
+                                dv2 = Vector2d.divide(v2, y.decay*c/i)
+                                p1 = Vector2d.subtract(x.p, dv1)
+                                p2 = Vector2d.subtract(y.p, dv2)
+                                d = Vector2d.distance(p1, p2)
+                                if x.r + y.r - d < 0
+                                        #console.log('subdivide failed')
+                                        break
+                                if x.r + y.r - d < 1
+                                        left = c - i
+                                        x.p = p1
+                                        y.p = p2
+                                        break
 
                
                 normal = Vector2d.unit(Vector2d.subtract(x.p,y.p))
@@ -91,7 +109,7 @@ class WorldModel
                 # m1*e(v1a - v2a) = -m1v1a-m2v2a + m2v2c + v2c*m1
                 # m1*e(v1a - v2a)+m1v1a + m2v2a = m2v2c + v2c*m1
                 # m1*e(v1a - v2a)+m1v1a + m2v2a/ (m2 + m1) = v2c
-                v2c = (m1*0.2*(v1a - v2a) + m1*v1a + m2*v2a) / (m2 + m1)
+                v2c = (m1*0.3*(v1a - v2a) + m1*v1a + m2*v2a) / (m2 + m1)
                 v1c = (m1*v1a + m2*v2a - m2*v2c) / m1
                 
                 #angle = Math.atan2(normal[y], normal[0])
@@ -106,4 +124,9 @@ class WorldModel
                 # Move objs so they no longer overlap.
                 x.p = Vector2d.add(x.p, Vector2d.multiply(normal, -overlap*x.r/(x.r+y.r)))
                 y.p = Vector2d.add(y.p, Vector2d.multiply(normal, overlap*y.r/(x.r+y.r)))
-        
+
+
+                if left
+                        x.p = Vector2d.add(x.p, Vector2d.multiply(x.v, left/c))
+                        y.p = Vector2d.add(y.p, Vector2d.multiply(x.v, left/c))
+                        
